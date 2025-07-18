@@ -14,5 +14,5 @@ The tools you will be working with will to solve the problems will be here:
 Tools: {tools}
 
 As you work on the problem, the context of each query will change, and you must adjust the plan accordingly. Here is the context received:
-Context: {Context}
+Context: {context}
 """

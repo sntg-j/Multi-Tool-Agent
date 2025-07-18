@@ -1,19 +1,6 @@
-from logging import debug
 import os
 import getpass
-
-from toolbox.calculator import Calculator
-from toolbox.web_search import search_tool, news_search_tool, finance_search_tool
-from toolbox.doc_reader import Doc_Reader
-from prompts.prompt_templates import agent_template
-import langchain
-import langgraph
-from langchain.chat_models import init_chat_model
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.agents.format_scratchpad.tools import (
-    format_to_tool_messages,
-)
-from langchain.agents.output_parsers.openai_functions import OpenAIFunctionsAgentOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import OpenAI
 
 OPENAI = os.environ.get("OPEN_AI_KEY")
@@ -25,8 +12,11 @@ class Agent:
         self.llm=llm
         self.temperature=temperature
         self.prompt_temp=prompt_temp
-        self.tools = [Calculator, search_tool, news_search_tool, finance_search_tool]
+        self.tools = None
     
+    def set_tools(self, tools):
+        self.tools = tools
+
     def set_llm(self):
         if not self.llm: 
             self.api_connect_check()
@@ -34,7 +24,7 @@ class Agent:
 
     def set_prompt_template(self, prompt):
         self.prompt_temp = ChatPromptTemplate.from_messages([
-            ("system", prompt),("human","")])
+            ("system", prompt),("human","{user_input}")])
 
     def api_connect_check(self):
         if not OPENAI:
@@ -48,14 +38,14 @@ def get_blank_client():
     client.set_llm()
     return client
 
-
-def create_agent():
-    client = Agent()
-    # client.set_llm()
-    client.set_llm()
-    client.set_prompt_template(agent_template) 
-    # response = client.llm.invoke(
-    #     input=""
-    # )
-    # print(response)
-    return client
+# Test function for arbitrary agent creation and API calls
+# def create_agent():
+#     client = Agent()
+#     # client.set_llm()
+#     client.set_llm()
+#     client.set_prompt_template(agent_template) 
+#     # response = client.llm.invoke(
+#     #     input=""
+#     # )
+#     # print(response)
+#     return client
