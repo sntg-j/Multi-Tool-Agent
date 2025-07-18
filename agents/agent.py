@@ -5,7 +5,7 @@ import getpass
 from toolbox.calculator import Calculator
 from toolbox.web_search import search_tool, news_search_tool, finance_search_tool
 from toolbox.doc_reader import Doc_Reader
-
+from prompts.prompt_templates import agent_template
 import langchain
 import langgraph
 from langchain.chat_models import init_chat_model
@@ -13,16 +13,14 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents.format_scratchpad.tools import (
     format_to_tool_messages,
 )
-from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
-from langchain.agents import create_tool_calling_agent
-from mistralai import Mistral, UserMessage
-from mistralai.models.chatcompletionrequest import ChatCompletionRequest
+from langchain.agents.output_parsers.openai_functions import OpenAIFunctionsAgentOutputParser
+from langchain_openai import OpenAI
 
-TAVILY = os.environ.get("MISTRAL_API_KEY")
-MISTRAL = os.environ.get("TAVILY_API_KEY")
+OPENAI = os.environ.get("OPEN_AI_KEY")
+TAVILY = os.environ.get("TAVILY_API_KEY")
 
 class Agent:
-    def __init__(self, model="devstral small",llm=None, prompt_temp=None, temperature=0):
+    def __init__(self, model="gpt-3.5-turbo-instruct",llm=None, prompt_temp=None, temperature=0):
         self.model=model
         self.llm=llm
         self.temperature=temperature
@@ -32,34 +30,32 @@ class Agent:
     def set_llm(self):
         if not self.llm: 
             self.api_connect_check()
-            self.llm = Mistral(api_key=MISTRAL)
+            self.llm = OpenAI(api_key=OPENAI)
 
     def set_prompt_template(self, prompt):
-        self.prompt_temp = prompt
-    
+        self.prompt_temp = ChatPromptTemplate.from_messages([
+            ("system", prompt),("human","")])
+
     def api_connect_check(self):
-        if not MISTRAL:
-            os.environ["MISTRAL_API_KEY"] = getpass.getpass("Enter API key for Mistral AI: ")
+        if not OPENAI:
+            os.environ["OPEN_AI_KEY"] = getpass.getpass("Enter API key for OpenAI: ")
         if not TAVILY:
             os.environ["TAVILY_API_KEY"] = getpass.getpass("Enter API key for Tavily: ")
 
 
+def get_blank_client():
+    client = Agent()
+    client.set_llm()
+    return client
+
 
 def create_agent():
     client = Agent()
+    # client.set_llm()
     client.set_llm()
-    debug(client.set_llm())
-    response = client.llm.chat.stream(
-    model=client.model,
-    messages=[
-        
-        UserMessage(content="What is the capital of France?")
-    ]
-    )
-
-    print(response.choices[0].message.content)
-    # llm.set_prompt_template() 
-    # return llm.construct_agent()
-
-if __name__ == "__main__":
-    create_agent()
+    client.set_prompt_template(agent_template) 
+    # response = client.llm.invoke(
+    #     input=""
+    # )
+    # print(response)
+    return client

@@ -1,5 +1,7 @@
 from ..agents.toolbox.tool_selector import ToolSelect
+from ..agents.agent import create_agent, get_blank_client
 import operator
+
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.messages import (
     BaseMessage,
@@ -15,7 +17,7 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langgraph.graph import END, Graph
 from langchain.agents import Tool
 from langchain_core.memory import BaseMemory
-from langchain_mistralai import ChatMistralAI
+from langchain_openai import OpenAI
 
 
 class Memory:
@@ -87,7 +89,7 @@ class AgentGraphState:
     def get_context(self) -> str:
         self.memory.get_context()
     
-def build_workflow(tools: List[Tool], llm:ChatMistralAI):
+def build_workflow(tools: List[Tool], llm:):
     tool_selector = ToolSelect(tools)
     state=AgentGraphState()
 

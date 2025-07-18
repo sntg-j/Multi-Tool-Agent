@@ -3,7 +3,7 @@ from langchain_core.tools import Tool
 
 # general search tool to retrieve basic search results
 search_tool = Tool(
-    name="general_search",
+    name="search_tool",
     func=TavilySearch(
     max_results=5,
     topic="general"
@@ -12,7 +12,7 @@ description="General search tool"
 )
 # news search tool to retrieve current events
 news_search_tool = Tool(
-    name="news_search",
+    name="news_search_tool",
     func=TavilySearch(
     max_results=5,
     topic="news",
@@ -23,12 +23,12 @@ description="News search tool"
 
 # finance search tool to retrieve recent financial data
 finance_search_tool = Tool(
-    name="finance_search",
+    name="finance_search_tool",
     func=TavilySearch(
     max_results=5,
     topic="finance",
     time_range="day"
 ),
-description="Finance search tool"
+description="Financial search tool"
 )
 
