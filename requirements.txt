@@ -1,0 +1,5 @@
+pip install langchain==0.3.26
+pip install langgraph==0.5.3
+pip install gradio==5.37.0
+pip install -qU "langchain[mistralai]"
+pip install langchain-tavily==0.2.9

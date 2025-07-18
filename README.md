@@ -11,9 +11,5 @@ Tools used to develop the system:
 
 Use the following commands to run the program:
 ``` bash
- pip install langchain
- pip install -U langgraph
- pip install --upgrade gradio
- pip install -qU "langchain[mistralai]"
- pip install -qU langchain-tavily
-```
+ pip install -r requirements.txt
+ ```
