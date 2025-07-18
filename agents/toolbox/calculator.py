@@ -1,6 +1,5 @@
 from langchain_core.tools import Tool
 from langchain_core.messages import ToolMessage
-from pydantic import BaseModel, Field
 # The decorator in this file allows us to create custom tools
 
 

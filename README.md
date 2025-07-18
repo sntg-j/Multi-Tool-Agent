@@ -8,6 +8,7 @@ Tools used to develop the system:
  - LangGraph 0.5.3
  - Gradio 5.37.0
  - langchain-tavily 0.2.9
+ - PyMuPDF 1.26.3
 
 Use the following commands to run the program:
 ``` bash
