@@ -32,3 +32,10 @@ finance_search_tool = Tool(
 description="Financial search tool"
 )
 
+def testing():
+    output = TavilySearch(
+        max_results=5,
+        topic="finance",
+        time_range="day").invoke({"query" :"what is the current valuation of NASDAQ"})
+
+    print(output)

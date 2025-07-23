@@ -37,6 +37,11 @@ def test(doc: pymupdf.Document):
             file.write(bytes((12,))) # write page delimiter (form feed 0x0C)
         file.close()
 
+def testing():
+# if __name__=="__main__":
+    text = doc_reader()
+    print(len(text))
+    print(text)
 
 Doc_Reader = Tool(name="doc_reader",
     func=doc_reader,
