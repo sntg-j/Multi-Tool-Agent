@@ -1,65 +1,27 @@
 from tool_selector import ToolSelect
+from agents.toolset.calculator import Calculator
+from agents.toolset.web_search import search_tool, news_search_tool, finance_search_tool
+from agents.toolset.doc_reader import Doc_Reader
+from agents.memory import Memory  
 from agents.agent import Agent, get_blank_client
-from prompts.prompt_templates import agent_template
+from agents.role_prompts.prompt_templates import agent_template
+
 from typing import List, Dict, Any, Optional, TypedDict 
 from langgraph.graph import StateGraph
-from langchain.agents import Tool
 
 
-class Memory:
-    def __init__(self, max_short_term=5, max_long_term=50):
-        self.short_memory = []
-        self.long_memory = []
-        self.max_short_term = max_short_term
-        self.max_long_term = max_long_term
-
-    # Appending the message to long-term memory
-    def append_long_term_memory(self, message: Dict[str, Any]):
-        self.long_memory.append(message)
-        if len(self.max_short_term) > self.max_short_term:
-            self.memory.pop(0)
-    
-    # Appending the message to short-term memory
-    def append_short_term_memory(self, message: Dict[str, Any]):
-        self.short_memory.append(message)
-        if len(self.max_short_term) > self.max_short_term:
-            self.memory.pop(0)
-
-    # Retrieving context from the recent conversation and key information about the conversation 
-    def get_context(self):
-        context = "Previous Conversation:\n"
-        context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in self.short_memory[-5:]])
-        
-        if self.long_memory:
-            context = "\n\nKey Info:\n"
-            context = "\n".join([f"- {msg['content']}" for msg in self.long_memory[-3:]])
-
-        return context            
-    
-    def importance_evaluator(self, client: Agent, data: Dict[str, Any]):
-        prompt = """Rate the importance of remembering this information based on the overall conversation on a scale of 1-10:
-        Text: "{data}"
-        Respond only with a number."""
-        response = client.llm.invoke(prompt)
-        return int(response) >=7
-
-    def update_memory(self, client:Agent, human_input: str, ai_output: str):
-        self.append_short_term_memory({"role": "user", "content": human_input})
-        self.append_short_term_memory({"role": "assistant", "content": ai_output})
-        
-        # Example heuristics for long-term memory (manual, delegated)
-        if "remember this" or "record this" in human_input.lower():
-            self.append_long_term_memory({"role": "user", "content": human_input})
-            self.append_long_term_memory({"role": "assistant", "content": ai_output})
-        elif self.importance_evaluator(client, human_input) == True:
-            self.append_long_term_memory({"role": "user", "content": human_input})
-            self.append_long_term_memory({"role": "assistant", "content": ai_output})
+tools = [Calculator, search_tool, news_search_tool, finance_search_tool, Doc_Reader]
 
 class AgentState(TypedDict):
-    memory: Memory
+    """This class is used as a input schema template for the workflow's input.
+        the variable names allow the proper data transfers from the invoke function's payload, 
+        while the types are how the values are to be casted.
+        """
+    memory: Dict[str, Any]
     pending_tool: Optional[str]
     tool_result: Optional[str]
-    last_input: str
+    recent_input: Dict[str, str]
+    debug: str
 
 class AgentGraphState:
     def __init__(self):
@@ -67,41 +29,72 @@ class AgentGraphState:
         self.pending_tool = None
         self.tool_result = None
         self.recent_input = ""
+        self.debug = None
     
     def update(self, client: Agent, user_input: str, ai_response: str = None, tool_name: str = None, tool_result: str = None):
         if user_input:
             self.recent_input = user_input
-            self.memory.update_memory(user_input, ai_response or "", client=client)
+            self.memory.update_memory(client, user_input, ai_response or "")
         
         if ai_response:
-            self.memory.append_short_term_memory({"role": "assistant", "content": ai_response})
+            self.memory.append_short_term_memory({"role": "system", "content": ai_response})
 
         self.pending_tool = tool_name
         self.tool_result = tool_result
     
+    def set_state(self, input: dict):
+        self.memory.short_memory = input["memory"]["short_memory"]
+        self.memory.long_memory = input["memory"]["long_memory"]
+        self.pending_tool = input["pending_tool"]
+        self.tool_result = input["tool_result"]
+        self.recent_input = input["recent_input"]
+        self.debug = input["debug"]
+
     def get_context(self) -> str:
-        self.memory.get_context()
-    
-def build_workflow(tools: List[Tool]):
+        return self.memory.get_context()
+
+def debug_mode(node_name: str, state: AgentGraphState):
+    print(f"\n========================{node_name.capitalize()}===============================")
+    print("state_short_memory: ",state.memory.short_memory)
+    print("state_long_memory: ",state.memory.long_memory)
+    print("state_pending_tool: ",state.pending_tool)
+    print("state_tool_result: ",state.tool_result)
+    print("state_recent_input: ",state.recent_input)
+    print("state_debug: ",state.debug)
+    print("")
+
+def build_workflow():
     client = get_blank_client()
     client.set_tools(tools)
     tool_selector = ToolSelect(tools)
     client.set_prompt_template(agent_template)
 
-
     # receives and processes input from the user
-    def receive_input(state: dict, user_input: str):
+    def receive_input(input:dict):        
         obj = AgentGraphState()
-        obj.__dict__ = state
-        obj.update(client, user_input)
-        return obj.__dict__
+
+        obj.set_state(input)
+        obj.update(client, user_input=obj.recent_input) # update with the user input data from the input referenced variable
+        
+        if obj.debug:
+            print("\n================STARTING DEBUG MODE================\n")
+            print("\nDEBUG MODE: STATE_SCHEMA\n")
+            print(workflow.state_schema.__dict__)
+            print("\nDEBUG MODE: SETUP\n")
+            tool_selector.set_debug(obj.debug)
+            debug_mode("receive_input", obj)
+
+        # return obj.__dict__
     
-    def decide_action(state: dict):
+    def decide_action(input: dict):
         obj = AgentGraphState()
-        obj.__dict__ = state
+        obj.set_state(input)
         context = obj.get_context()
 
-        selected_tool = tool_selector.selection(obj.memory.short_memory[-1]["content"], context)
+        if obj.debug:
+            debug_mode("decide_action", obj)
+
+        selected_tool = tool_selector.selection(obj.memory.short_memory[-1]["content"], context, client)
         
         if selected_tool:
             return {"tool": selected_tool.name}
@@ -109,11 +102,13 @@ def build_workflow(tools: List[Tool]):
         # in the event that our current toolbox is not enough to solve the user's question
         return {"response": "This will be handled by the llm without tools"} 
 
-    def tool_run(state:dict):
+    def tool_run(input:dict):
         obj = AgentGraphState()
-        obj.__dict__= state
+        obj.set_state(input)
         tool = tool_selector.tools[obj.pending_tool]
-            
+
+        if obj.debug:
+            debug_mode("tool_run", obj)
         # retrieves the most recent user message, to maintain state integrity
         last_user_msg = next( 
             msg for msg in reversed(obj.memory.short_memory) 
@@ -124,9 +119,9 @@ def build_workflow(tools: List[Tool]):
         obj.update(None, tool_name=obj.pending_tool, tool_result=result, client=client)
         return obj.__dict__
     
-    def generate_response(state:dict):
+    def generate_response(input:dict):
         obj = AgentGraphState()
-        obj.__dict__ = state
+        obj.set_state(input)
         context = obj.get_context()
 
         chain = client.prompt_temp | client.llm
@@ -138,7 +133,7 @@ def build_workflow(tools: List[Tool]):
         return{"response": response, "state": obj.__dict__}
     
     workflow = StateGraph(AgentState)
-
+    
     workflow.add_node("receive_input", receive_input)
     workflow.add_node("decide_action", decide_action)
     workflow.add_node("tool_run", tool_run)
@@ -165,3 +160,4 @@ def build_workflow(tools: List[Tool]):
     workflow.set_finish_point("generate_response")
 
     return workflow.compile()
+

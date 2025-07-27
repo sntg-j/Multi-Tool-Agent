@@ -151,7 +151,6 @@ def calculator(expression: str) -> str:
     except Exception as e:
         return f"Error: {str(e)}"
 
-
 def testing():
 # if __name__ == "__main__":
     print(calculator("(3*2)/4+ 6"))

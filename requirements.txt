@@ -1,7 +1,7 @@
-pip install langchain==0.3.26
-pip install langgraph==0.5.3
-pip install gradio==5.37.0
-pip install langchain-tavily==0.2.9
-pip install PyMuPDF==1.26.3
-pip install openai==1.97.0
-pip install -qU langchain-openai
+langchain==0.3.26
+langgraph==0.5.3
+gradio
+langchain-tavily==0.2.9
+PyMuPDF==1.26.3
+openai==1.97.0
+langchain-openai

@@ -6,22 +6,40 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 
 class ToolSelect:
-    def __init__(self, tools: List[Tool]):
+    def __init__(self, tools: List[Tool], debug = False):
         self.tools = {tool.name: tool for tool in tools}
         self._last_selected = None  # Track last selection to prevent loops
+        self.debug = debug
     
+    def set_debug(self, mode: bool):
+        print("Changing ToolSelect to debug mode...")
+        self.debug = mode
+        print(f"debug mode: {self.debug}")
+        return
+
     def selection(self, query: str, context: str, client: Agent) -> Optional[Tool]:
         query = query.lower()  # case normalization
         for name, tool in self.tools.items():
+            if self.debug:
+                print(f"current tool name:\t{name}")
             if name.lower() in query:
+                if self.debug:
+                    print(f"explicitly calling tool:\t{name}")
                 return tool
         
         for tool in self.tools.values():
             keywords = tool.description.lower().split()[:5]
+            if self.debug:
+                print(f"keyword used:\t{keywords}")
             if any(kw in query for kw in keywords if len(kw) > 3):  # Skip short words
+                if self.debug:
+                    print(f"tool found by deciding keyword:\t{keywords}")
                 return tool
             
         if self._last_selected != query:  # Prevent infinite loops
+            if self.debug:
+                print(f"query:\t{query}")
+                print(f"last selected tool:\t{self._last_selected}")
             self._last_selected = query
             return self.llm_delegation(query, context, client)
         return None
@@ -52,6 +70,11 @@ class ToolSelect:
         )
         
         try:
+            if self.debug:
+                print("==========LLM DELEGATION==========")
+                print(f"tool list:\t{tools_list}")
+                print(f"chain:\t{chain.__dict__}")
+                print(f"prompt\t{prompt}\n")
             return chain.invoke({
                 "query": query,
                 "context": context,
