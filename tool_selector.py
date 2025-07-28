@@ -72,9 +72,9 @@ class ToolSelect:
         try:
             if self.debug:
                 print("==========LLM DELEGATION==========")
-                print(f"tool list:\t{tools_list}")
-                print(f"chain:\t{chain.__dict__}")
-                print(f"prompt\t{prompt}\n")
+                print(f"tool list:\n{tools_list}\n")
+                print(f"chain:\t{chain.__dict__}\n")
+                print(f"prompt:\t{prompt}\n")
             return chain.invoke({
                 "query": query,
                 "context": context,

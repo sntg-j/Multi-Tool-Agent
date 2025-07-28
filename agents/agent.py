@@ -39,7 +39,7 @@ class Agent:
 
     def set_prompt_template(self, prompt):
         self.prompt_temp = ChatPromptTemplate.from_messages([
-            ("system", prompt),("human","{user_input}")])
+            ("assistant", prompt),("human","{user_input}")])
 
     def api_connect_check(self):
         # Will continue asking until the API key is entered properly

@@ -9,6 +9,9 @@ class Memory:
         self.max_long_term = max_long_term
         self.debug=debug
 
+    def start_debug(self, mode: bool):
+        self.debug = mode
+
     # Appending the message to long-term memory
     def append_long_term_memory(self, message: Dict[str, Any]):
         self.long_memory.append(message)
@@ -36,15 +39,17 @@ class Memory:
         prompt = f"""Rate the importance of remembering this information based on the overall conversation on a scale of 1-10:
         Text: "{data}"
         Respond only with a number."""
+        
         if self.debug:
             print("=============INPUT INFO=============")
             print(f"received data:\t{data}\n")
             print(f"added prompt:\t{prompt}\n")
-            response = client.invoke(prompt)
+        
+        response = client.invoke(prompt)
+        
+        if self.debug:
             print("=============OUTPUT INFO=============")
             print(f"response prompt{response}\n")
-            return
-        response = client.invoke(prompt)
         return int(response) >=7
 
     def update_memory(self, client:Agent, human_input: str, ai_output: str):
