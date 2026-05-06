@@ -1,0 +1,16 @@
+Looping Thought Process Function (Agent Scratchpad):
+Purpose:
+    Handling multiple step user queries are difficult for low param llms to manage with a single query, especially when the data requires most of the agent's tools and concepts to be fleshed out before creating a concrete step by step plan. Allowing llm to loop through the query allows agents to gather more context from the user query and improve the accuracy of the response. 
+
+Generalized Process:
+- query intake: The first part of the process would be to first keep the original copy of the query in memory for querying, and have a work in progress query
+
+- query processing: This part will have the work in progress query be given to the llm where it will generate a response based on the context.
+
+- response validation (loop process): The reponse must be kept by the agent's scratchpad to track the progress of the prompts and state what aspects of the prompt are irrelevant to the original query. This will require another request to the llm to determine what parts of the response are not applicable to the response to the user query.
+    - loop end condition: there must be a maximum threshold where the loop process should not pass to avoid constant looping to find the answer.
+
+
+
+Next Steps:
+    There has been releases of articles detailing recursive prompting which can be implemented in the agent scratchpad which will confine the state of the agent's processing within the state of the query. Currently, I will need to understand the scratchpad method before moving to this state. Note that there could also be instances of the recursion which could theoretically pruned just as we do for adverserial search or dynamic programming methods to handle the bloating of the querying.

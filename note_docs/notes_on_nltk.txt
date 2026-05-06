@@ -1,0 +1,63 @@
+Overview:
+- Natural Language Tool Kit or NLTK, refers to an external Python library that allows advanced methods of
+    word processing which can be useful for Machine Learning Algorithms.
+- This library can also be used for advanced methods of semantic analysis and probability based decision 
+    making for Agentic Tool Selection logic which is what this program will be accomplishing.
+
+Objective:
+- currently, looking for the right tool to use based on the queries provided by users is difficult with
+    low grade LLMs.
+
+Concepts:
+- Stop Words / Key Words
+- Chunking
+- Fuzzy scoring/edit distances (levenshtein, jaro, etc.)
+
+Reasoning:
+- based on what we've seen from querying to LLMs, we can avoid/reduce calls to the models using 
+    algorithms that determine simple tool calls by partitioning all the key words from stop words.
+- note that this process will include steps to reduce the size and complexity of the query we will be 
+    working with:
+    
+    1. extract the stop words
+    2. determine tool namings based on key words. 
+    3. multiple algorithms working in tandem to define agent tool calling logic, which can include 
+        fuzzy scoring and probability based deduction algorithms, if applicable.
+    3. new method of returning determining tool selection logic using LLMs within the project space.
+
+Questions to consider
+-   if data contains tool naming but method calling was incorrect... how can we consider this before 
+    calling on the tool?
+-   if we consider a probability based algorithm, what are the minimum thresholds and how are they 
+    defined (statically or dynamically)?
+
+
+As of 2/28/26
+- currently the stopword functionality will break the semantic meaning of the tool selection logic, and this is shown from the tokenization and filtering process of the previously tested module called testing_nltk where the stopwords consider meaningful words such as do not, from, to, etc. this is detrimental for tool selecting since this can define directionality of the tool's call, and narrows it's maximum scope of use. we can plan to create it as a predecessor model to the next model. 
+- this next arch model could include the part of speech tagging from chunking, tokenization, and fuzzy scoring which was mentioned before in the previous outline. by including chunks and POS tags, we can define the potential tools needed by the query using weightings and confidence scoring methods to determine easy methods to call and reduce the calls to the llm.
+
+stopword method:
+tokenize, stopword filter, and fuzzyscore algos for tool call. use confidence scores to define a threshold for the tool request based on the writing of the tool.
+if confidence score is too low, call llm
+
+
+question: how do I calculate the likelihood of a tool call through semantic analysis?
+
+options:
+use the name directly
+    pros: names will always be used and requires unique values
+    cons: limited info
+using the description of the tool:
+    pros: description of the tool defines it's purpose and intent can be found from analysis of the data
+    cons: modifying the description could change the method's calling easily.
+alt-method:
+    using each tool's name and metadata as a "bucket" and gauging the intent through confidence scores based on this predefined info with a oncoming query's scan. 
+    
+    This comparison logic is used for the BM25 algorithm, which creates a targeted approach to finding info using semantic analysis of the query, that may contain unique info/keywords to boost the chances of calling the right tool while also penalizing the larger inputs to avoid these types of queries from dominating and calling all tools solely through scores that only create noise.
+    
+creating a semantic layer for tool selection:
+    currently, BM25 is an algorithm that I've searched through and found to be a keyword analysis tool for retrieval. While this is quicker to find tools using this, I will need to use a different method to find the intent and contextual meaning to determine the type of tool to call.
+    
+    There is an option of adding a in-memory vectorstore using langchain to define my tool selection.
+
+    The problem to this is the potential draining of starting up and using the object in each query. There will be more research done on this, but in the event that the object is not capable of supporting the full store, I can define a single serialized document to store the state of the vectorstore and keep another txt file to track the full list of functions in the tool

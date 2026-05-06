@@ -5,3 +5,4 @@ langchain-tavily==0.2.9
 PyMuPDF==1.26.3
 openai==1.97.0
 langchain-openai
+nltk

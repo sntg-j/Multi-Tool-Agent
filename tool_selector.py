@@ -1,9 +1,23 @@
+import nltk
 from typing import Optional, List
 from langchain_core.tools import Tool
 
 from agents.agent import Agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
+
+"""
+    Tool Selector Development Progress:
+        As of 9/3/28:
+            - The heuristics for the tool selection logic is functional as it catches the tool requested by the user 
+                and avoids using the llm delegation as much as possible.
+            - Fixed the chain bug in the RunnableLambda portion where x.content.strip() prevented the invocation 
+                from happening through return type mismatch errors.
+            - Fixed the tool_list string comprehension procedure to retrieve the name, and descriptions of the tools.
+            - Next, updating heurstic function for the tool selection process to select the tool through sentiment analysis 
+                using NLTK, and possibly pandas. This will capture the proper tool using stemming and lemmatization.
+            - In addition, formatting the LLM delegation prompt to specify the name of the tool will be needed.
+"""
 
 class ToolSelect:
     def __init__(self, tools: List[Tool], debug = False):
@@ -56,30 +70,34 @@ class ToolSelect:
              "3. Prioritize tools that match the query precisely"),
             ("human", 
              "Query: {query}\n\n"
-             "Available Tools:\n{tools}\n\n"
-             "Tool Name:")
+             "Available Tools:\n{tools}\n\n")
         ])
         tools_list = "\n".join(
-            f"{i}. {name}: {tool.description}" 
-            for i, (name, tool) in enumerate(self.tools.items(), 1)
+            f"{i}. {tool.name}: {tool.description}" 
+            for i, (_, tool) in enumerate(self.tools.items(), 1)
         )
         chain = (
-            prompt 
+            prompt
             | client.llm.bind(stop=["\n"])  # Stop at newline to get just the name
-            | RunnableLambda(lambda x: self.tools.get(x.content.strip(), None))
+            | RunnableLambda(lambda x: self.tools.get(x, None))
         )
         
         try:
             if self.debug:
-                print("==========LLM DELEGATION==========")
+                print("\n==========LLM DELEGATION==========\n")
                 print(f"tool list:\n{tools_list}\n")
                 print(f"chain:\t{chain.__dict__}\n")
                 print(f"prompt:\t{prompt}\n")
-            return chain.invoke({
-                "query": query,
+            result = chain.invoke({
                 "context": context,
+                "query": query,
                 "tools": tools_list
             })
-        except Exception:
-            return None  # Fail gracefully
+
+            # VVVVVVVV COMMENT THIS OUT LATER VVVVVVVV
+            if self.debug:
+                print(f"Chain result:\t{result}")
+            return result
+        except Exception as e:
+            return f"Error: {str(e)}" # Fail gracefully
 

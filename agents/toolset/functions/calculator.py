@@ -1,3 +1,4 @@
+import re
 from typing import Tuple, List, Union
 from langchain_core.tools import Tool
 
@@ -128,12 +129,25 @@ def expression_check(tokens: List[Union[float, str]]) -> Tuple[bool, str]:
     return True, ""
 
 def calculator(expression: str) -> str:
+    """
+    This module is responsible for handling basic mathematical operations.
+        - This function handles more than one expression within the query 
+            through class exclusions to extract each one.
+        - The scope of the equations is no longer limited to one, 
+            so the answers will also have to match the size of the problems
+        - Changing the return type of function from str to list and modifying the display of 
+            the answers in the LLM will be necessary to improve the calculator function. [INCOMPLETE AS OF 9/9]
+    """
     try:
         # checking for empty strings
         expr = expression.strip()
         if not expr:
             return "Error: Empty expression"
-        
+
+        # list comprehension of a regex split to find all potential expressions regardless of spacing
+        expr = [i.strip() for i in (re.split(r'[^\s\.\(\)\-\+\/\=\*\d]', expr)) # returns expressions, null and space elements 
+                                    if (not i.isspace() and i != '')] # filters out null and space elements
+
         # Tokenize and validate for proper syntax
         tokens = tokenize(expr)
         is_valid, error_msg = expression_check(tokens)
@@ -152,13 +166,18 @@ def calculator(expression: str) -> str:
         return f"Error: {str(e)}"
 
 def testing():
-# if __name__ == "__main__":
     print(calculator("(3*2)/4+ 6"))
     print(calculator("(3*2)-4+6"))
     print(calculator("(3/2)*4- 6"))
     print(calculator("(3/2)*4-=6"))
     print(calculator("(3/0)*4-6"))
 
-Calculator = Tool( name="calculator",
-    func=calculator,
-    description="A tool used for PEMDAS specific calculations.")
+
+
+# """ testing the use of multiple instances of expressions to check through to improve the functionalities of the calculator """
+# if __name__ == "__main__":
+#     expr = """Test Text string(4.4+3)*3+5post text string now help witht hsi 9+8"""
+#     expr = (expr.lower())
+#     # list comprehension of a regex split that captures all potential expressions regardless of spacing and clears out any empty spaces around the equation
+#     temp = [i.strip() for i in (re.split(r'[^\s\.\(\)\-\+\/\=\*\d]', expr)) if (not i.isspace() and i != '')]
+#     print(temp)

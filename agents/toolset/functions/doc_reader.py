@@ -13,8 +13,8 @@ def doc_reader() -> str:
 
     # prompting the user to search the file they would like summarized
     filepath = filedialog.askopenfilename(initialdir=BASE_PATH,
-                                                            title="Choose a file to upload",
-                                                            filetypes=[("*", "pdf")])
+                                          title="Choose a file to upload",
+                                          filetypes=[("*", "pdf")])
 
     filename = filepath.split("/")[-1] # extracting the name of the file found within the absolute path
     path = path.joinpath(filename) # constructing the new path for the link 
@@ -38,11 +38,9 @@ def test(doc: pymupdf.Document):
         file.close()
 
 def testing():
-# if __name__=="__main__":
     text = doc_reader()
     print(len(text))
     print(text)
 
-Doc_Reader = Tool(name="doc_reader",
-    func=doc_reader,
-    description="Useful for pdf text extraction purposes.")
+# if __name__=="__main__":
+#     testing()
